@@ -1,0 +1,6 @@
+@EmployeeManagement.Cadastro.API_HostAddress = http://localhost:5009
+
+GET {{EmployeeManagement.Cadastro.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
