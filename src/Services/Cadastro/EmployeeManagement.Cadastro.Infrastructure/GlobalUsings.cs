@@ -1,0 +1,11 @@
+global using EmployeeManagement.Cadastro.Domain.Entities;
+global using Microsoft.EntityFrameworkCore;
+global using EmployeeManagement.Cadastro.Domain.Interfaces;
+global using EmployeeManagement.Cadastro.Infrastructure.Data;
+global using EmployeeManagement.Cadastro.Infrastructure.Messaging;
+global using EmployeeManagement.Cadastro.Infrastructure.Repositories;
+global using EmployeeManagement.Cadastro.Infrastructure.Services;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using MassTransit;
