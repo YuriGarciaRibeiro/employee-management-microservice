@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace EmployeeManagement.Cadastro.Application.UseCases.Commands.CreateEmployee;
 
 public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, EmployeeDto>
