@@ -39,6 +39,22 @@ services:
       timeout: 5s
       retries: 5
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: employee-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - employee-network
+    depends_on:
+      - postgres
+
   sonarqube:
     image: sonarqube:community
     container_name: employee-sonarqube
@@ -56,6 +72,7 @@ services:
 volumes:
   postgres-data:
   rabbitmq-data:
+  pgadmin-data:
   sonarqube-data:
   sonarqube-extensions:
   sonarqube-logs:
