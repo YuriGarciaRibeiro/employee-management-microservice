@@ -9,5 +9,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EmployeeManagement.Ativacao.Application\EmployeeManagement.Ativacao.Application.csproj" />
+    <ProjectReference Include="..\EmployeeManagement.Ativacao.Infrastructure\EmployeeManagement.Ativacao.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

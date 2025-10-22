@@ -6,4 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EmployeeManagement.Notificacoes.Domain\EmployeeManagement.Notificacoes.Domain.csproj" />
+    <ProjectReference Include="..\EmployeeManagement.Notificacoes.Application\EmployeeManagement.Notificacoes.Application.csproj" />
+  </ItemGroup>
+
 </Project>
