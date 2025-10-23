@@ -79,30 +79,38 @@ jobs:
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
     # 9. End SonarQube analysis
-    - name: End SonarQube analysis
+    - name: End SonarQube analysis and write report-task.txt
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.login="${SONAR_TOKEN}"
-
-    # 9.5 Ensure Sonar report-task.txt is available for Quality Gate action
-    - name: Locate and copy Sonar report-task.txt
-      run: |
-        echo "Searching for report-task.txt files..."
-        set -e
-        # show potential locations for debugging
-        find . -type f -name 'report-task.txt' -print || true
-        REPORT=$(find . -type f -name 'report-task.txt' | head -n1 || true)
-        if [ -z "$REPORT" ]; then
-          echo "No report-task.txt found. Listing repository for debug:"
-          ls -la
-          echo "Full tree:" && find . -maxdepth 3 -type d -print
-          exit 0
-        fi
-        echo "Found report: $REPORT"
-        mkdir -p .scannerwork
-        cp "$REPORT" .scannerwork/report-task.txt
-        echo "Copied $REPORT -> .scannerwork/report-task.txt"
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
       shell: bash
+      run: |
+        set -eo pipefail
+        mkdir -p .scannerwork
+
+        echo "Running dotnet sonarscanner end and capturing output..."
+        # Capture output (stdout+stderr) so we can parse CE task id
+        OUTPUT_FILE=sonar_end_output.log
+        if ! dotnet sonarscanner end /d:sonar.login="${SONAR_TOKEN}" 2>&1 | tee "$OUTPUT_FILE"; then
+          echo "dotnet sonarscanner end failed. See $OUTPUT_FILE for details" >&2
+          exit 1
+        fi
+
+        # Try to extract CE task id from the output (pattern: api/ce/task?id=...)
+        CE_ID=$(grep -oE 'api/ce/task\?id=[A-Za-z0-9_-]+' "$OUTPUT_FILE" | head -n1 | sed 's/.*id=//') || true
+
+        if [ -n "$CE_ID" ]; then
+          # Normalize host URL (remove trailing slash)
+          HOST="${SONAR_HOST_URL:-http://localhost:9000}"
+          HOST=${HOST%/}
+          echo "ceTaskUrl=${HOST}/api/ce/task?id=${CE_ID}" > .scannerwork/report-task.txt
+          echo "Wrote .scannerwork/report-task.txt with CE task id: ${CE_ID}"
+        else
+          echo "WARNING: could not find CE task id in sonarscanner output. Showing output for debug:" >&2
+          sed -n '1,200p' "$OUTPUT_FILE" >&2 || true
+          echo "Failing the job because report-task.txt is required for the Quality Gate action." >&2
+          exit 1
+        fi
 
     # 10. Wait for Quality Gate result
     - name: Wait for Quality Gate
