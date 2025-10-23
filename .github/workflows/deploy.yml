@@ -55,14 +55,16 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+        SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
       run: |
         dotnet sonarscanner begin \
-          /k:"employee-management-microservice" \
+          /k:"${SONAR_PROJECT_KEY}" \
           /o:"${SONAR_ORGANIZATION}" \
           /d:sonar.host.url="${SONAR_HOST_URL:-http://localhost:9000}" \
           /d:sonar.login="${SONAR_TOKEN}" \
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
-          /d:sonar.coverage.exclusions="**Tests.cs,**Tests/**,**/Migrations/**"
+          /d:sonar.coverage.exclusions="**Tests.cs,**Tests/**,**/Migrations/**" \
+          /d:sonar.verbose=true
 
     # 7. Build solution
     - name: Build solution
@@ -81,6 +83,26 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: dotnet sonarscanner end /d:sonar.login="${SONAR_TOKEN}"
+
+    # 9.5 Ensure Sonar report-task.txt is available for Quality Gate action
+    - name: Locate and copy Sonar report-task.txt
+      run: |
+        echo "Searching for report-task.txt files..."
+        set -e
+        # show potential locations for debugging
+        find . -type f -name 'report-task.txt' -print || true
+        REPORT=$(find . -type f -name 'report-task.txt' | head -n1 || true)
+        if [ -z "$REPORT" ]; then
+          echo "No report-task.txt found. Listing repository for debug:"
+          ls -la
+          echo "Full tree:" && find . -maxdepth 3 -type d -print
+          exit 0
+        fi
+        echo "Found report: $REPORT"
+        mkdir -p .scannerwork
+        cp "$REPORT" .scannerwork/report-task.txt
+        echo "Copied $REPORT -> .scannerwork/report-task.txt"
+      shell: bash
 
     # 10. Wait for Quality Gate result
     - name: Wait for Quality Gate
