@@ -1,5 +1,7 @@
 namespace EmployeeManagement.Cadastro.Application.UseCases.Commands.CreateEmployee;
 
+using EmployeeManagement.BuildingBlocks.Contracts.Events;
+
 public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, EmployeeDto>
 {
     private readonly IEmployeeRepository _repository;

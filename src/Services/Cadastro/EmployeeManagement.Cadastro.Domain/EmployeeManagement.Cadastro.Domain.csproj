@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Contracts\EmployeeManagement.BuildingBlocks.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

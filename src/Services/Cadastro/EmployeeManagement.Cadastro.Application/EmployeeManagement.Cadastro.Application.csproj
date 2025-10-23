@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.Cadastro.Domain\EmployeeManagement.Cadastro.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Contracts\EmployeeManagement.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

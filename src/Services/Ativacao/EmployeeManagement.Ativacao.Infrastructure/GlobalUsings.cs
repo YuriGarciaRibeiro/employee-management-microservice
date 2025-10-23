@@ -1,0 +1,9 @@
+global using EmployeeManagement.Ativacao.Infrastructure.Jobs;
+global using EmployeeManagement.Ativacao.Infrastructure.Messaging;
+global using EmployeeManagement.BuildingBlocks.Contracts.Events;
+global using Hangfire;
+global using Hangfire.PostgreSql;
+global using MassTransit;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;

@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.21" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.20.12" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.4" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.Ativacao.Domain\EmployeeManagement.Ativacao.Domain.csproj" />
     <ProjectReference Include="..\EmployeeManagement.Ativacao.Application\EmployeeManagement.Ativacao.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Contracts\EmployeeManagement.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

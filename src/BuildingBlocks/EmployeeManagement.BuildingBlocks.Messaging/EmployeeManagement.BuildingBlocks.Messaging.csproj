@@ -9,12 +9,12 @@
   <ItemGroup>
     <PackageReference Include="MassTransit" Version="8.5.5" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.5" />
-    <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.10" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EmployeeManagement.Ativacao.Domain\EmployeeManagement.Ativacao.Domain.csproj" />
-    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Contracts\EmployeeManagement.BuildingBlocks.Contracts.csproj" />
+    <ProjectReference Include="..\EmployeeManagement.BuildingBlocks.Contracts\EmployeeManagement.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
