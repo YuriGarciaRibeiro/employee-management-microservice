@@ -8,11 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.Notificacoes.Domain\EmployeeManagement.Notificacoes.Domain.csproj" />
     <ProjectReference Include="..\EmployeeManagement.Notificacoes.Application\EmployeeManagement.Notificacoes.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Contracts\EmployeeManagement.BuildingBlocks.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

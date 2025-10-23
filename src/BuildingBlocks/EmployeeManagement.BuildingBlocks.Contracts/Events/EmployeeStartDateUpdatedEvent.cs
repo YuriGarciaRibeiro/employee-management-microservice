@@ -1,4 +1,4 @@
-namespace EmployeeManagement.Cadastro.Domain.Events;
+namespace EmployeeManagement.BuildingBlocks.Contracts.Events;
 
 public class EmployeeStartDateUpdatedEvent
 {

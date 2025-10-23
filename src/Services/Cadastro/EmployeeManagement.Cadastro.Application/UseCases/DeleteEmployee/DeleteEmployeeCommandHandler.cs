@@ -13,19 +13,10 @@ public class DeleteEmployeeCommandHandler : IRequestHandler<DeleteEmployeeComman
 
     public async Task<Unit> Handle(DeleteEmployeeCommand request, CancellationToken cancellationToken)
     {
-        var employee = await _repository.GetByIdAsync(request.Id)
+        var _ = await _repository.GetByIdAsync(request.Id)
             ?? throw new KeyNotFoundException($"Funcionário com ID {request.Id} não encontrado");
 
         await _repository.DeleteAsync(request.Id);
-
-        var @event = new EmployeeDeletedEvent
-        {
-            EmployeeId = employee.Id,
-            EmployeeName = employee.Name,
-            Department = employee.Department,
-            DeletedAt = DateTime.UtcNow
-        };
-        await _eventPublisher.PublishAsync(@event);
 
         return Unit.Value;
     }

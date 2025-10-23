@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalR Test - Employee Notifications</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-connect {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-connect:hover {
+            background-color: #45a049;
+        }
+        .btn-disconnect {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-disconnect:hover {
+            background-color: #da190b;
+        }
+        .btn-join {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-join:hover {
+            background-color: #0b7dda;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .status.disconnected {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .status.connected {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .notifications {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .notification {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #2196F3;
+            background-color: #f9f9f9;
+            animation: slideIn 0.3s ease-out;
+        }
+        .notification.created {
+            border-left-color: #4CAF50;
+        }
+        .notification.activated {
+            border-left-color: #FF9800;
+        }
+        .notification-header {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .notification-body {
+            color: #666;
+            font-size: 14px;
+        }
+        .notification-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+            color: #555;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔔 Employee Notifications - SignalR Test</h1>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Conexão</h2>
+            <div id="status" class="status disconnected">Desconectado</div>
+
+            <div class="controls">
+                <div>
+                    <label for="hubUrl">Hub URL:</label>
+                    <input type="text" id="hubUrl" value="http://localhost:5000/employeeHub" style="width: 100%;">
+                </div>
+
+                <button class="btn-connect" onclick="connect()">Conectar</button>
+                <button class="btn-disconnect" onclick="disconnect()" disabled>Desconectar</button>
+
+                <hr>
+
+                <div>
+                    <label for="department">Entrar no grupo (Departamento):</label>
+                    <select id="department">
+                        <option value="TI">TI</option>
+                        <option value="RH">RH</option>
+                        <option value="Financeiro">Financeiro</option>
+                        <option value="Vendas">Vendas</option>
+                        <option value="Marketing">Marketing</option>
+                    </select>
+                </div>
+
+                <button class="btn-join" onclick="joinDepartment()" disabled>Entrar no Departamento</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Notificações Recebidas</h2>
+            <button onclick="clearNotifications()" style="background-color: #757575; color: white; margin-bottom: 10px;">
+                Limpar Notificações
+            </button>
+            <div id="notifications" class="notifications"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+    <script>
+        let connection = null;
+
+        async function connect() {
+            const hubUrl = document.getElementById('hubUrl').value;
+
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(hubUrl)
+                .withAutomaticReconnect()
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
+
+            // Registrar handlers para os métodos do SignalR
+            connection.on("ReceiveNotification", (notification) => {
+                console.log("Notificação geral recebida:", notification);
+                addNotification(notification, "general");
+            });
+
+            connection.on("ReceiveEmployeeCreated", (notification) => {
+                console.log("Funcionário criado:", notification);
+                addNotification(notification, "created");
+            });
+
+            connection.on("ReceiveEmployeeActivated", (notification) => {
+                console.log("Funcionário ativado:", notification);
+                addNotification(notification, "activated");
+            });
+
+            connection.onreconnecting((error) => {
+                console.warn("Reconectando...", error);
+                updateStatus("Reconectando...", "disconnected");
+            });
+
+            connection.onreconnected((connectionId) => {
+                console.log("Reconectado! Connection ID:", connectionId);
+                updateStatus("Conectado", "connected");
+            });
+
+            connection.onclose((error) => {
+                console.error("Conexão fechada:", error);
+                updateStatus("Desconectado", "disconnected");
+                document.querySelector('.btn-connect').disabled = false;
+                document.querySelector('.btn-disconnect').disabled = true;
+                document.querySelector('.btn-join').disabled = true;
+            });
+
+            try {
+                await connection.start();
+                console.log("Conectado com sucesso! Connection ID:", connection.connectionId);
+                updateStatus("Conectado", "connected");
+                document.querySelector('.btn-connect').disabled = true;
+                document.querySelector('.btn-disconnect').disabled = false;
+                document.querySelector('.btn-join').disabled = false;
+            } catch (error) {
+                console.error("Erro ao conectar:", error);
+                alert("Erro ao conectar: " + error.message);
+            }
+        }
+
+        async function disconnect() {
+            if (connection) {
+                await connection.stop();
+                console.log("Desconectado");
+                updateStatus("Desconectado", "disconnected");
+                document.querySelector('.btn-connect').disabled = false;
+                document.querySelector('.btn-disconnect').disabled = true;
+                document.querySelector('.btn-join').disabled = true;
+            }
+        }
+
+        async function joinDepartment() {
+            if (!connection) {
+                alert("Conecte-se primeiro!");
+                return;
+            }
+
+            const department = document.getElementById('department').value;
+
+            try {
+                await connection.invoke("JoinDepartmentGroup", department);
+                console.log("Entrou no grupo:", department);
+                alert(`✅ Entrou no grupo: ${department}`);
+            } catch (error) {
+                console.error("Erro ao entrar no grupo:", error);
+                alert("Erro ao entrar no grupo: " + error.message);
+            }
+        }
+
+        function updateStatus(text, cssClass) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = text;
+            statusDiv.className = `status ${cssClass}`;
+        }
+
+        function addNotification(notification, type) {
+            const notificationsDiv = document.getElementById('notifications');
+
+            const notificationEl = document.createElement('div');
+            notificationEl.className = `notification ${type}`;
+
+            const time = new Date(notification.timestamp).toLocaleString('pt-BR');
+
+            notificationEl.innerHTML = `
+                <div class="notification-header">${notification.eventType}</div>
+                <div class="notification-body">
+                    <strong>${notification.employeeName}</strong><br>
+                    ${notification.message}<br>
+                    ${notification.department ? `Departamento: ${notification.department}` : ''}
+                </div>
+                <div class="notification-time">${time}</div>
+            `;
+
+            notificationsDiv.insertBefore(notificationEl, notificationsDiv.firstChild);
+        }
+
+        function clearNotifications() {
+            document.getElementById('notifications').innerHTML = '';
+        }
+
+        // Conectar automaticamente ao carregar a página (opcional)
+        // window.addEventListener('load', connect);
+    </script>
+</body>
+</html>

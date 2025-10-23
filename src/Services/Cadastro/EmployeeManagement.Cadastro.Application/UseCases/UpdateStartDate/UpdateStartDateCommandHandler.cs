@@ -1,3 +1,5 @@
+using EmployeeManagement.BuildingBlocks.Contracts.Events;
+
 namespace EmployeeManagement.Cadastro.Application.UseCases.Commands.UpdateStartDate;
 
 public class UpdateStartDateCommandHandler : IRequestHandler<UpdateStartDateCommand, Unit>
