@@ -150,3 +150,6 @@ TODO.md
 
 # Serilog log files
 logs/
+
+# GitHub Actions local secrets
+.github/workflows/.secrets
