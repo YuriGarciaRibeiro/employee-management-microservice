@@ -147,3 +147,6 @@ docker-compose.override.yml
 .claude/
 Prova Desenvolvedor .Net.pdf
 TODO.md
+
+# Serilog log files
+logs/

@@ -1,4 +1,19 @@
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurar Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.WithProperty("Application", "Notificacoes.API")
+    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+try
+{
+    Log.Information("Iniciando Notificacoes.API");
 
 // Add services to the container.
 
@@ -20,4 +35,15 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+    app.Run();
+
+    Log.Information("Notificacoes.API encerrado com sucesso");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Notificacoes.API terminou inesperadamente");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

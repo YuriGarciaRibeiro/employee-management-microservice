@@ -1,4 +1,19 @@
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurar Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.WithProperty("Application", "Cadastro.API")
+    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+try
+{
+    Log.Information("Iniciando Cadastro.API");
 
 builder.Services.AddOpenApi();
 
@@ -113,4 +128,15 @@ app.MapControllers();
 app.MapEmployeesEndpoints();
 app.MapAuthEndpoints();
 
-app.Run();
+    app.Run();
+
+    Log.Information("Cadastro.API encerrado com sucesso");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Cadastro.API terminou inesperadamente");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
