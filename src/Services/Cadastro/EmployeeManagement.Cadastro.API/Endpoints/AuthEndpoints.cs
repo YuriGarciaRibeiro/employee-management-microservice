@@ -36,7 +36,7 @@ public static class AuthEndpoints
             user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(int.Parse(configuration["JwtSettings:RefreshTokenExpirationInDays"] ?? "7"));
             await userManager.UpdateAsync(user);
 
-            return Results.Ok(new AuthResponseDto
+            return Results.Created($"/api/auth/user/{user.Id}", new AuthResponseDto
             {
                 Token = token,
                 RefreshToken = refreshToken,

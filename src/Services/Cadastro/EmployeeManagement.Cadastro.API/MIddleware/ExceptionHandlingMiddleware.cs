@@ -36,7 +36,7 @@ public class ExceptionHandlingMiddleware
         var (statusCode, message) = exception switch
         {
             KeyNotFoundException => (HttpStatusCode.NotFound, exception.Message),
-            ValidationException validationException => (HttpStatusCode.BadRequest, string.Join("; ", validationException.Errors.Select(e => e.ErrorMessage))),
+            ValidationException validationException => (HttpStatusCode.UnprocessableEntity, string.Join("; ", validationException.Errors.Select(e => e.ErrorMessage))),
             UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Não autorizado"),
             _ => (HttpStatusCode.InternalServerError, "Ocorreu um erro interno no servidor")
         };

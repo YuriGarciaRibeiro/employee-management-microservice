@@ -1,0 +1,68 @@
+# Directories
+**/bin/
+**/obj/
+**/out/
+**/logs/
+**/TestResults/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/.git/
+**/.github/
+**/node_modules/
+
+# Files
+**/*.trx
+**/*.md
+**/*.docx
+**/*.pdf
+**/.DS_Store
+**/.gitignore
+**/.gitattributes
+**/.editorconfig
+**/LICENSE
+**/README.md
+**/STRUCTURE.md
+**/TODO.md
+**/IMPLEMENTATION_PLAN.md
+**/FAST_TRACK_PLAN.md
+
+# User-specific files
+**/*.user
+**/*.suo
+**/*.cache
+**/*.log
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Test Coverage
+**/coverage/
+**/*.coverage
+**/*.coveragexml
+
+# NuGet
+**/packages/
+**/*.nupkg
+**/*.snupkg
+**/project.lock.json
+**/project.fragment.lock.json
+**/artifacts/
+
+# Docker
+**/.dockerignore
+**/docker-compose*.yml
+**/Dockerfile*

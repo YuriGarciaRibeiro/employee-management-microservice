@@ -1,3 +1,7 @@
+using EmployeeManagement.Cadastro.Application.Behaviors;
+using EmployeeManagement.Cadastro.Domain.Entities;
+using EmployeeManagement.Cadastro.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,16 +64,20 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EmployeeManagement.Cadastro.Application.UseCases.Commands.CreateEmployee.CreateEmployeeCommand).Assembly));
+// MediatR with Validation Pipeline Behavior
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(EmployeeManagement.Cadastro.Application.UseCases.Commands.CreateEmployee.CreateEmployeeCommand).Assembly);
+    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+});
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(EmployeeMappingProfile));
 
-// FluentValidation: register validators for DI and enable ASP.NET Core automatic validation
-builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeDtoValidator>();
-builder.Services.AddFluentValidationAutoValidation();
+// FluentValidation: register all validators from Application assembly
+builder.Services.AddValidatorsFromAssembly(typeof(EmployeeManagement.Cadastro.Application.UseCases.Commands.CreateEmployee.CreateEmployeeCommand).Assembly);
 
 var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
 builder.Services.AddAuthentication(options =>
@@ -106,6 +114,26 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Initialize database with migrations and seed data
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+
+        await DbInitializer.InitializeAsync(context, userManager, roleManager, logger);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocorreu um erro ao inicializar o banco de dados");
+    }
+}
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

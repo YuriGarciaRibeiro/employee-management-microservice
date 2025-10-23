@@ -16,7 +16,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
 
         builder.Property(e => e.Phone)
             .IsRequired()
-            .HasMaxLength(11);
+            .HasMaxLength(20);
 
         builder.Property(e => e.Department)
             .IsRequired()

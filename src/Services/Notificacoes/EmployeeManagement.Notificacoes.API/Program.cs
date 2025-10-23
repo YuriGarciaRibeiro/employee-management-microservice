@@ -22,7 +22,16 @@ try
     // Add services to the container
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
-    builder.Services.AddSwaggerGen();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+        {
+            Title = "Employee Management - Notificações API",
+            Version = "v1",
+            Description = "API de notificações em tempo real usando SignalR. O SignalR Hub está disponível em /employeeHub"
+        });
+    });
 
     // Configurar CORS
     builder.Services.AddCors(options =>

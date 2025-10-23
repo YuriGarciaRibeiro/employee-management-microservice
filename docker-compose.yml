@@ -69,6 +69,125 @@ services:
     networks:
       - employee-network
 
+  seq:
+    image: datalust/seq:latest
+    container_name: employee-seq
+    environment:
+      ACCEPT_EULA: 'Y'
+    ports:
+      - "5341:80"
+      - "5342:5341"
+    volumes:
+      - seq-data:/data
+    networks:
+      - employee-network
+
+  # Microservices
+  cadastro-api:
+    build:
+      context: .
+      dockerfile: src/Services/Cadastro/EmployeeManagement.Cadastro.API/Dockerfile
+    container_name: employee-cadastro-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres;Include Error Detail=true
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+      - JwtSettings__Secret=${JWT_SECRET:-your-super-secret-key-change-this-in-production-min-32-chars}
+      - JwtSettings__Issuer=EmployeeManagement
+      - JwtSettings__Audience=EmployeeManagementUsers
+      - JwtSettings__ExpirationMinutes=60
+      - JwtSettings__RefreshTokenExpirationDays=7
+      - EmailSettings__SmtpHost=${SMTP_HOST:-smtp.gmail.com}
+      - EmailSettings__SmtpPort=${SMTP_PORT:-587}
+      - EmailSettings__SmtpUser=${SMTP_USER:-noreply@employeemanagement.com}
+      - EmailSettings__SmtpPassword=${SMTP_PASSWORD:-}
+      - EmailSettings__FromEmail=${SMTP_FROM:-noreply@employeemanagement.com}
+      - EmailSettings__FromName=Employee Management System
+      - Serilog__WriteTo__1__Name=Seq
+      - Serilog__WriteTo__1__Args__serverUrl=http://seq:5341
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    networks:
+      - employee-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  ativacao-worker:
+    build:
+      context: .
+      dockerfile: src/Services/Ativacao/EmployeeManagement.Ativacao.Worker/Dockerfile
+    container_name: employee-ativacao-worker
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres;Include Error Detail=true
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+      - Hangfire__DashboardEnabled=true
+      - Hangfire__WorkerCount=5
+      - Serilog__WriteTo__1__Name=Seq
+      - Serilog__WriteTo__1__Args__serverUrl=http://seq:5341
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    networks:
+      - employee-network
+    restart: unless-stopped
+
+  notificacoes-api:
+    build:
+      context: .
+      dockerfile: src/Services/Notificacoes/EmployeeManagement.Notificacoes.API/Dockerfile
+    container_name: employee-notificacoes-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=guest
+      - RabbitMQ__Password=guest
+      - SignalR__EnableDetailedErrors=true
+      - Cors__AllowedOrigins=http://localhost:3000,http://localhost:5173
+      - Serilog__WriteTo__1__Name=Seq
+      - Serilog__WriteTo__1__Args__serverUrl=http://seq:5341
+    ports:
+      - "5002:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    networks:
+      - employee-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
 volumes:
   postgres-data:
   rabbitmq-data:
@@ -76,6 +195,7 @@ volumes:
   sonarqube-data:
   sonarqube-extensions:
   sonarqube-logs:
+  seq-data:
 
 networks:
   employee-network:
