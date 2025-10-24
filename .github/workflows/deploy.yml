@@ -121,6 +121,36 @@ jobs:
         fi
 
     # 10. Wait for Quality Gate result
+    # 10. Diagnostic: query SonarCloud for CE task and Quality Gate details (helps debug failures)
+    - name: Debug SonarCloud Quality Gate
+      shell: bash
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      run: |
+        set -euo pipefail
+        echo "Reading .scannerwork/report-task.txt"
+        if [ -f .scannerwork/report-task.txt ]; then
+          cat .scannerwork/report-task.txt || true
+        else
+          echo "WARN: .scannerwork/report-task.txt not found"
+        fi
+
+        # Try to extract CE id (if present) and show CE task JSON
+        CE_URL=$(grep -a -oE 'https?://[^ ]+/api/ce/task\?id=[A-Za-z0-9_-]+' .scannerwork/report-task.txt 2>/dev/null || true)
+        if [ -n "${CE_URL}" ]; then
+          echo "Found CE URL: ${CE_URL}"
+          echo "Fetching CE task JSON..."
+          curl -s -u "${SONAR_TOKEN}:" "${CE_URL}" | python -m json.tool || curl -s -u "${SONAR_TOKEN}:" "${CE_URL}" || true
+        else
+          echo "No CE URL found in report-task.txt; will attempt project_status API"
+        fi
+
+        echo "Fetching project quality gate status for project: ${SONAR_PROJECT_KEY}"
+        curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL%/}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}" | python -m json.tool || curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL%/}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}" || true
+
+    # 11. Wait for Quality Gate result
     - name: Wait for Quality Gate
       uses: sonarsource/sonarqube-quality-gate-action@master
       timeout-minutes: 5
