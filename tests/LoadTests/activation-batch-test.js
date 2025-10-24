@@ -104,7 +104,7 @@ function testGetEmployeesGroupedByDepartment() {
     'grouped response has departments': (r) => {
       try {
         const data = JSON.parse(r.body);
-        return Array.isArray(data) && data.length >= 0;
+        return Array.isArray(data);
       } catch {
         return false;
       }
