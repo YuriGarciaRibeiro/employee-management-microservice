@@ -8,11 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Bogus" Version="35.6.4" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
-    <PackageReference Include="FluentAssertions" Version="8.7.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.10" />
+    <PackageReference Include="FluentAssertions" Version="8.8.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
@@ -22,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Services\Cadastro\EmployeeManagement.Cadastro.Domain\EmployeeManagement.Cadastro.Domain.csproj" />
     <ProjectReference Include="..\..\src\Services\Cadastro\EmployeeManagement.Cadastro.Application\EmployeeManagement.Cadastro.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Cadastro\EmployeeManagement.Cadastro.Domain\EmployeeManagement.Cadastro.Domain.csproj" />
     <ProjectReference Include="..\..\src\Services\Cadastro\EmployeeManagement.Cadastro.Infrastructure\EmployeeManagement.Cadastro.Infrastructure.csproj" />
   </ItemGroup>
 

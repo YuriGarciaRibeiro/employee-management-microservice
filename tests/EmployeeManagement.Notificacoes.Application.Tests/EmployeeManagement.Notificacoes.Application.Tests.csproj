@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
-    <PackageReference Include="FluentAssertions" Version="8.7.1" />
+    <PackageReference Include="FluentAssertions" Version="8.8.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.2" />
@@ -21,7 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Services\Ativacao\EmployeeManagement.Ativacao.Application\EmployeeManagement.Ativacao.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Notificacoes\EmployeeManagement.Notificacoes.Application\EmployeeManagement.Notificacoes.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Notificacoes\EmployeeManagement.Notificacoes.Domain\EmployeeManagement.Notificacoes.Domain.csproj" />
   </ItemGroup>
 
 </Project>
