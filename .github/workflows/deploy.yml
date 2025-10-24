@@ -66,7 +66,6 @@ jobs:
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
           /d:sonar.coverage.exclusions="**Tests.cs,**Tests/**,**/Migrations/**" \
           /d:sonar.verbose=true
-
     # 7. Build solution
     - name: Build solution
       run: dotnet build --configuration Release --no-restore
@@ -78,7 +77,6 @@ jobs:
           --collect:"XPlat Code Coverage" \
           --results-directory ./coverage \
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-
     # 9. End SonarQube analysis
     - name: End SonarQube analysis and write report-task.txt
       env:
@@ -88,7 +86,6 @@ jobs:
       run: |
         set -eo pipefail
         mkdir -p .scannerwork
-
         echo "Running dotnet sonarscanner end and capturing output..."
         # Capture output (stdout+stderr) so we can parse CE task id
         OUTPUT_FILE=sonar_end_output.log
@@ -96,18 +93,15 @@ jobs:
           echo "dotnet sonarscanner end failed. See $OUTPUT_FILE for details" >&2
           exit 1
         fi
-
         # Try to extract CE task id from the output (pattern: api/ce/task?id=...)
         # Treat the log as text even if grep detects binary data, and fall back to `strings` if needed.
         CE_ID=$(grep -a -oE 'api/ce/task\?id=[A-Za-z0-9_-]+' "$OUTPUT_FILE" | head -n1 | sed 's/.*id=//') || true
-
         if [ -z "$CE_ID" ]; then
           # Fallback: filter printable strings then grep (if `strings` is available)
           if command -v strings >/dev/null 2>&1; then
             CE_ID=$(strings "$OUTPUT_FILE" | grep -oE 'api/ce/task\?id=[A-Za-z0-9_-]+' | head -n1 | sed 's/.*id=//') || true
           fi
         fi
-
         if [ -n "$CE_ID" ]; then
           # Normalize host URL (remove trailing slash)
           HOST="${SONAR_HOST_URL:-http://localhost:9000}"
@@ -120,7 +114,6 @@ jobs:
           echo "Failing the job because report-task.txt is required for the Quality Gate action." >&2
           exit 1
         fi
-
     # 10. Wait for Quality Gate result
     # 10. Diagnostic: query SonarCloud for CE task and Quality Gate details (helps debug failures)
     - name: Debug SonarCloud Quality Gate
@@ -137,7 +130,6 @@ jobs:
         else
           echo "WARN: .scannerwork/report-task.txt not found"
         fi
-
         # Try to extract CE id (if present) and show CE task JSON
         CE_URL=$(grep -a -oE 'https?://[^ ]+/api/ce/task\?id=[A-Za-z0-9_-]+' .scannerwork/report-task.txt 2>/dev/null || true)
         if [ -n "${CE_URL}" ]; then
@@ -147,10 +139,8 @@ jobs:
         else
           echo "No CE URL found in report-task.txt; will attempt project_status API"
         fi
-
         echo "Fetching project quality gate status for project: ${SONAR_PROJECT_KEY}"
         curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL%/}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}" | python -m json.tool || curl -s -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL%/}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}" || true
-
     # 11. Wait for Quality Gate result
     - name: Wait for Quality Gate
       uses: sonarsource/sonarqube-quality-gate-action@master
@@ -202,7 +192,6 @@ jobs:
           type=ref,event=branch
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
-
     - name: Build and push Docker image - ${{ matrix.service.name }}
       uses: docker/build-push-action@v5
       with:
