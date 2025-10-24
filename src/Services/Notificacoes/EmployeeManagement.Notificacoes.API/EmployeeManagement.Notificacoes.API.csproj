@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.Notificacoes.Application\EmployeeManagement.Notificacoes.Application.csproj" />
     <ProjectReference Include="..\EmployeeManagement.Notificacoes.Infrastructure\EmployeeManagement.Notificacoes.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Core\EmployeeManagement.BuildingBlocks.Core.csproj" />
   </ItemGroup>
 
 </Project>

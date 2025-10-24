@@ -69,19 +69,6 @@ services:
     networks:
       - employee-network
 
-  seq:
-    image: datalust/seq:latest
-    container_name: employee-seq
-    environment:
-      ACCEPT_EULA: 'Y'
-    ports:
-      - "5341:80"
-      - "5342:5341"
-    volumes:
-      - seq-data:/data
-    networks:
-      - employee-network
-
   # Microservices
   cadastro-api:
     build:
@@ -116,8 +103,7 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      seq:
-        condition: service_started
+
     networks:
       - employee-network
     restart: unless-stopped
@@ -151,8 +137,7 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      seq:
-        condition: service_started
+
     networks:
       - employee-network
     restart: unless-stopped
@@ -178,8 +163,6 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-      seq:
-        condition: service_started
     networks:
       - employee-network
     restart: unless-stopped
@@ -197,7 +180,6 @@ volumes:
   sonarqube-data:
   sonarqube-extensions:
   sonarqube-logs:
-  seq-data:
 
 networks:
   employee-network:

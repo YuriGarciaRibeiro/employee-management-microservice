@@ -1,133 +1,79 @@
 using EmployeeManagement.Notificacoes.Application.Services;
 using EmployeeManagement.Notificacoes.Domain.Interfaces;
 using EmployeeManagement.Notificacoes.Infrastructure.Messaging;
+using EmployeeManagement.BuildingBlocks.Core.Extensions;
 using MassTransit;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configurar Serilog
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.WithProperty("Application", "Notificacoes.API")
-    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
-    .CreateLogger();
+builder.AddSerilogLogging("Notificacoes.API");
 
-builder.Host.UseSerilog();
+// Controllers
+builder.Services.AddControllers();
 
-try
+// Swagger
+builder.Services.AddSwaggerDocumentation(
+    title: "Employee Management - Notificações API",
+    description: "API de notificações em tempo real usando SignalR. O SignalR Hub está disponível em /employeeHub");
+
+// CORS
+builder.Services.AddDevelopmentCors();
+
+// SignalR
+builder.Services.AddSignalR();
+
+// Serviços da aplicação
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// MassTransit (RabbitMQ) com consumers
+builder.Services.AddMassTransit(x =>
 {
-    Log.Information("Iniciando Notificacoes.API");
+    // Registrar consumers
+    x.AddConsumer<EmployeeCreatedEventConsumer>();
+    x.AddConsumer<EmployeeActivatedEventConsumer>();
+    x.AddConsumer<EmployeeStartDateUpdatedEventConsumer>();
 
-    // Add services to the container
-    builder.Services.AddControllers();
-    builder.Services.AddOpenApi();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen(c =>
+    x.UsingRabbitMq((context, cfg) =>
     {
-        c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-        {
-            Title = "Employee Management - Notificações API",
-            Version = "v1",
-            Description = "API de notificações em tempo real usando SignalR. O SignalR Hub está disponível em /employeeHub"
-        });
+        var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
+        cfg.Host(rabbitMqConfig["Host"] ?? "localhost",
+                 rabbitMqConfig.GetValue<ushort>("Port", 5672),
+                 "/",
+                 h =>
+                 {
+                     h.Username(rabbitMqConfig["Username"] ?? "guest");
+                     h.Password(rabbitMqConfig["Password"] ?? "guest");
+                 });
+
+        // Configurar endpoints
+        cfg.ReceiveEndpoint("employee-notifications-created", e =>
+            e.ConfigureConsumer<EmployeeCreatedEventConsumer>(context));
+
+        cfg.ReceiveEndpoint("employee-notifications-activated", e =>
+            e.ConfigureConsumer<EmployeeActivatedEventConsumer>(context));
+
+        cfg.ReceiveEndpoint("employee-notifications-startdate-updated", e =>
+            e.ConfigureConsumer<EmployeeStartDateUpdatedEventConsumer>(context));
     });
+});
 
-    // Configurar CORS
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy("AllowAll", policy =>
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
-    });
+var app = builder.Build();
 
-    // Configurar SignalR
-    builder.Services.AddSignalR();
-
-    // Registrar serviços da aplicação
-    builder.Services.AddScoped<INotificationService, NotificationService>();
-
-    // Configurar MassTransit (RabbitMQ)
-    var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
-    var host = rabbitMqConfig["Host"] ?? "localhost";
-    var port = rabbitMqConfig.GetValue<ushort>("Port", 5672);
-    var username = rabbitMqConfig["Username"] ?? "guest";
-    var password = rabbitMqConfig["Password"] ?? "guest";
-
-    builder.Services.AddMassTransit(x =>
-    {
-        // Registrar consumers
-        x.AddConsumer<EmployeeCreatedEventConsumer>();
-        x.AddConsumer<EmployeeActivatedEventConsumer>();
-        x.AddConsumer<EmployeeStartDateUpdatedEventConsumer>();
-
-        x.UsingRabbitMq((context, cfg) =>
-        {
-            cfg.Host(host, port, "/", h =>
-            {
-                h.Username(username);
-                h.Password(password);
-            });
-
-            // Configurar endpoints para os consumers
-            cfg.ReceiveEndpoint("employee-notifications-created", e =>
-            {
-                e.ConfigureConsumer<EmployeeCreatedEventConsumer>(context);
-            });
-
-            cfg.ReceiveEndpoint("employee-notifications-activated", e =>
-            {
-                e.ConfigureConsumer<EmployeeActivatedEventConsumer>(context);
-            });
-
-            cfg.ReceiveEndpoint("employee-notifications-startdate-updated", e =>
-            {
-                e.ConfigureConsumer<EmployeeStartDateUpdatedEventConsumer>(context);
-            });
-        });
-    });
-
-    var app = builder.Build();
-
-    // Configure the HTTP request pipeline
-    if (app.Environment.IsDevelopment())
-    {
-        app.MapOpenApi();
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
-
-    app.UseSerilogRequestLogging();
-
-    app.UseCors("AllowAll");
-
-    // Habilitar arquivos estáticos (HTML, CSS, JS)
-    app.UseStaticFiles();
-
-    app.UseHttpsRedirection();
-
-    app.UseAuthorization();
-
-    app.MapControllers();
-
-    // Mapear SignalR Hub
-    app.MapHub<EmployeeHub>("/employeeHub");
-
-    Log.Information("SignalR Hub mapeado em: /employeeHub");
-    Log.Information("Notificacoes.API iniciado com sucesso");
-
-    app.Run();
-
-    Log.Information("Notificacoes.API encerrado com sucesso");
-}
-catch (Exception ex)
+// Configure HTTP request pipeline
+if (app.Environment.IsDevelopment())
 {
-    Log.Fatal(ex, "Notificacoes.API terminou inesperadamente");
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
-finally
-{
-    Log.CloseAndFlush();
-}
+
+app.UseCors("DefaultCorsPolicy");
+app.UseStaticFiles();
+app.UseHttpsRedirection();
+app.UseAuthorization();
+
+app.MapControllers();
+app.MapHub<EmployeeHub>("/employeeHub");
+
+// Executar aplicação com logging do Serilog
+SerilogExtensions.RunWithSerilog(() => app.Run(), "Notificacoes.API");

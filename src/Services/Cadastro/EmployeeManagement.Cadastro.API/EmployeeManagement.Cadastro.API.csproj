@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.Cadastro.Application\EmployeeManagement.Cadastro.Application.csproj" />
     <ProjectReference Include="..\EmployeeManagement.Cadastro.Infrastructure\EmployeeManagement.Cadastro.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Core\EmployeeManagement.BuildingBlocks.Core.csproj" />
   </ItemGroup>
 
 </Project>

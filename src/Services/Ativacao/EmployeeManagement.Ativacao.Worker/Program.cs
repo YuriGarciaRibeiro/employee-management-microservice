@@ -1,31 +1,23 @@
 using EmployeeManagement.Ativacao.Infrastructure;
 using EmployeeManagement.Ativacao.Infrastructure.Jobs;
+using EmployeeManagement.BuildingBlocks.Core.Extensions;
 using Hangfire;
-using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 // Configurar Serilog
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .Enrich.WithProperty("Application", "Ativacao.Worker")
-    .Enrich.WithProperty("Environment", builder.Environment.EnvironmentName)
-    .CreateLogger();
+builder.AddSerilogLogging("Ativacao.Worker");
 
-builder.Services.AddSerilog();
-
-try
-{
-    Log.Information("Iniciando Ativacao.Worker");
-
+// Infrastructure (Hangfire, DbContext, Repositories, etc.)
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var host = builder.Build();
 
-// Configurar Hangfire Jobs
+// Configurar Hangfire Job recorrente
 using (var scope = host.Services.CreateScope())
 {
     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     recurringJobManager.AddOrUpdate<EmployeeActivationJob>(
         "employee-activation-job",
@@ -36,18 +28,8 @@ using (var scope = host.Services.CreateScope())
             TimeZone = TimeZoneInfo.Local
         });
 
-    Log.Information("Job de ativação de funcionários configurado com sucesso");
+    logger.LogInformation("Job de ativação de funcionários configurado com sucesso");
 }
 
-    host.Run();
-
-    Log.Information("Ativacao.Worker encerrado com sucesso");
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "Ativacao.Worker terminou inesperadamente");
-}
-finally
-{
-    Log.CloseAndFlush();
-}
+// Executar worker com logging do Serilog
+SerilogExtensions.RunWithSerilog(() => host.Run(), "Ativacao.Worker");

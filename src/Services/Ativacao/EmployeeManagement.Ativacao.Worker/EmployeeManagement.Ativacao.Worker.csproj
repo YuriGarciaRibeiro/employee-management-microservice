@@ -23,5 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="..\EmployeeManagement.Ativacao.Application\EmployeeManagement.Ativacao.Application.csproj" />
     <ProjectReference Include="..\EmployeeManagement.Ativacao.Infrastructure\EmployeeManagement.Ativacao.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\EmployeeManagement.BuildingBlocks.Core\EmployeeManagement.BuildingBlocks.Core.csproj" />
   </ItemGroup>
 </Project>
