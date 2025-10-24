@@ -91,47 +91,231 @@ employee-management-microservice/
 - Ativação na data de início
 - Processamento em lotes de 100 para volume > 1000
 
-## ⚡ Como Executar
+## ⚡ Quick Start
 
 ### Pré-requisitos
-- .NET 9.0 SDK
-- Docker e Docker Compose
+- **.NET 9.0 SDK** - [Download](https://dotnet.microsoft.com/download/dotnet/9.0)
+- **Docker** e **Docker Compose** - [Download](https://www.docker.com/products/docker-desktop)
+- **Git** - [Download](https://git-scm.com/)
 
-### Executar com Docker Compose
+### Opção 1: Executar com Docker Compose (Recomendado)
 
-1. Clone o repositório
+Esta é a forma mais rápida de rodar toda a aplicação.
+
+**1. Clone o repositório:**
 ```bash
 git clone https://github.com/seu-usuario/employee-management-microservice.git
 cd employee-management-microservice
 ```
 
-2. Inicie os serviços de infraestrutura
+**2. Inicie todos os serviços:**
 ```bash
-docker-compose up -d
+docker-compose up --build
 ```
 
-3. Aguarde os serviços estarem prontos
-- PostgreSQL: http://localhost:5432
-- RabbitMQ Management: http://localhost:15672 (guest/guest)
-- SonarQube: http://localhost:9000 (admin/admin)
+**3. Aguarde os serviços estarem prontos (2-3 minutos):**
 
-### Executar Localmente
+| Serviço | URL | Credenciais |
+|---------|-----|-------------|
+| **Cadastro API** | http://localhost:5001 | - |
+| **Notificações API** | http://localhost:5002 | - |
+| **Swagger (Cadastro)** | http://localhost:5001/swagger | - |
+| **Swagger (Notificações)** | http://localhost:5002/swagger | - |
+| **PostgreSQL** | localhost:5432 | user: `postgres` / pwd: `postgres` |
+| **RabbitMQ Management** | http://localhost:15672 | user: `guest` / pwd: `guest` |
+| **Hangfire Dashboard** | http://localhost:5001/hangfire | - |
+
+**4. Teste a API:**
 
 ```bash
-# Restaurar pacotes
+# Criar um usuário
+curl -X POST http://localhost:5001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "Test@123"
+  }'
+
+# Fazer login
+curl -X POST http://localhost:5001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "Test@123"
+  }'
+
+# Copie o token retornado e use para criar um funcionário
+curl -X POST http://localhost:5001/api/employees \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI" \
+  -d '{
+    "name": "João Silva",
+    "phone": "+5511987654321",
+    "department": "TI",
+    "startDate": "2025-12-01T08:00:00Z"
+  }'
+```
+
+**5. Parar os serviços:**
+```bash
+docker-compose down
+```
+
+**6. Limpar volumes (reset completo):**
+```bash
+docker-compose down -v
+```
+
+---
+
+### Opção 2: Executar Localmente (Desenvolvimento)
+
+Para desenvolvimento local sem Docker.
+
+**1. Inicie as dependências (PostgreSQL, RabbitMQ):**
+```bash
+docker-compose up -d postgres rabbitmq
+```
+
+**2. Configure as connection strings (opcional):**
+
+Edite `src/Services/Cadastro/EmployeeManagement.Cadastro.API/appsettings.Development.json`:
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=EmployeeManagement;Username=postgres;Password=postgres"
+  },
+  "RabbitMQ": {
+    "Host": "localhost",
+    "Port": 5672,
+    "Username": "guest",
+    "Password": "guest"
+  }
+}
+```
+
+**3. Restaurar e compilar:**
+```bash
 dotnet restore
-
-# Compilar
 dotnet build
+```
 
-# Executar microsserviço de Cadastro
+**4. Executar migrations (primeira vez):**
+```bash
+cd src/Services/Cadastro/EmployeeManagement.Cadastro.API
+dotnet ef database update
+```
+
+**5. Executar os serviços (em terminais separados):**
+
+**Terminal 1 - Cadastro API:**
+```bash
 dotnet run --project src/Services/Cadastro/EmployeeManagement.Cadastro.API
+# Rodando em http://localhost:5001
+```
 
-# Executar microsserviço de Notificações
+**Terminal 2 - Notificações API:**
+```bash
 dotnet run --project src/Services/Notificacoes/EmployeeManagement.Notificacoes.API
+# Rodando em http://localhost:5002
+```
 
-# Executar Worker de Ativação
+**Terminal 3 - Worker de Ativação:**
+```bash
 dotnet run --project src/Services/Ativacao/EmployeeManagement.Ativacao.Worker
+# Worker rodando em background
+```
+
+**6. Acesse:**
+- Swagger Cadastro: http://localhost:5001/swagger
+- Swagger Notificações: http://localhost:5002/swagger
+- Hangfire: http://localhost:5001/hangfire
+
+---
+
+### Opção 3: Executar Testes
+
+**Testes Unitários (99 testes):**
+```bash
+# Rodar todos os testes
+dotnet test
+
+# Rodar testes com coverage
+dotnet test /p:CollectCoverage=true
+
+# Rodar testes de um projeto específico
+dotnet test tests/EmployeeManagement.Cadastro.Application.Tests
+```
+
+**Testes de Carga K6:**
+```bash
+# Certifique-se que a API está rodando primeiro
+docker-compose up -d
+
+# Teste de autenticação
+k6 run tests/LoadTests/auth-load-test.js
+
+# Teste CRUD de funcionários
+k6 run tests/LoadTests/employee-load-test.js
+
+# Teste de ativação em lote
+k6 run tests/LoadTests/activation-batch-test.js
+
+# Cenário customizado
+k6 run --env VUS=100 --env DURATION=60s tests/LoadTests/employee-load-test.js
+```
+
+Veja mais detalhes em [tests/LoadTests/README.md](tests/LoadTests/README.md)
+
+---
+
+### 🔧 Troubleshooting
+
+**Problema: Porta já em uso**
+```bash
+# Verificar portas em uso
+netstat -ano | findstr :5001
+netstat -ano | findstr :5432
+
+# Matar processo (Windows - substitua PID)
+taskkill /PID <PID> /F
+
+# Ou altere as portas no docker-compose.yml
+```
+
+**Problema: Migrations não aplicadas**
+```bash
+# Aplicar migrations manualmente
+cd src/Services/Cadastro/EmployeeManagement.Cadastro.API
+dotnet ef database update
+```
+
+**Problema: RabbitMQ não conecta**
+```bash
+# Verificar se RabbitMQ está rodando
+docker ps | grep rabbitmq
+
+# Ver logs do RabbitMQ
+docker logs <rabbitmq-container-id>
+
+# Reiniciar RabbitMQ
+docker-compose restart rabbitmq
+```
+
+**Problema: Erro de autenticação**
+```bash
+# Certifique-se de criar um usuário primeiro
+# Use o endpoint /api/auth/register antes de /api/auth/login
+```
+
+**Problema: Docker build falha**
+```bash
+# Limpar cache do Docker
+docker system prune -a
+
+# Rebuild sem cache
+docker-compose build --no-cache
+docker-compose up
 ```
 
 ## 📝 Endpoints da API
@@ -766,35 +950,358 @@ connection.on("ReceiveStartDateUpdated", (notification) => {
 
 ## 🧪 Testes
 
-### Testes Unitários
+### Cobertura de Testes
+
+O projeto possui **99 testes unitários** cobrindo todas as camadas da aplicação:
+
+| Projeto | Testes | Cobertura |
+|---------|--------|-----------|
+| Cadastro.Application.Tests | 88 | Services, Handlers, Validators |
+| Notificacoes.Application.Tests | 7 | NotificationService, SignalR |
+| Ativacao.Infrastructure.Tests | 4 | EmployeeActivationJob |
+| **TOTAL** | **99** | - |
+
+### Executar Testes Unitários
+
 ```bash
+# Rodar todos os testes
 dotnet test
+
+# Rodar com detalhes
+dotnet test --verbosity normal
+
+# Rodar testes de um projeto específico
+dotnet test tests/EmployeeManagement.Cadastro.Application.Tests
+
+# Rodar com coverage
+dotnet test /p:CollectCoverage=true /p:CoverageReportFormat=opencover
 ```
 
-### Testes de Carga
+### Testes de Carga com K6
+
+O projeto inclui 3 suites de testes de carga:
+
+**1. auth-load-test.js** - Testes de autenticação
+- 50 VUs simultâneos
+- Duração: 20s
+- Threshold: 95% < 500ms
+
+**2. employee-load-test.js** - CRUD completo
+- Stages: 10 → 50 → 100 → 0 VUs
+- Testa: Create, Read, Update, Delete
+- Threshold: 95% < 2s, falhas < 10%
+
+**3. activation-batch-test.js** - Ativação em lote
+- Simula processamento batch
+- Consultas por período e departamento
+- Peak: 100 VUs
+
 ```bash
-cd tests/LoadTests
-k6 run employee-load-test.js
+# Executar testes K6
+k6 run tests/LoadTests/auth-load-test.js
+k6 run tests/LoadTests/employee-load-test.js
+k6 run tests/LoadTests/activation-batch-test.js
+
+# Com parâmetros customizados
+k6 run --env VUS=100 --env DURATION=60s tests/LoadTests/employee-load-test.js
 ```
 
-## 🔄 CI/CD
+Documentação completa: [tests/LoadTests/README.md](tests/LoadTests/README.md)
 
-Pipeline configurada com GitHub Actions:
-- Build e compilação
-- Testes unitários
-- Análise de código (SonarQube)
-- Build de imagens Docker
-- Deploy automático
+---
+
+## 🔄 CI/CD Pipeline
+
+Pipeline automatizada com **GitHub Actions** implementando as melhores práticas:
+
+### Workflows
+
+**1. deploy.yml** - Pipeline Principal
+- ✅ Build e compilação (.NET 9.0)
+- ✅ Testes unitários (99 testes)
+- ✅ Análise de código SonarCloud
+- ✅ Análise de segurança (Trivy)
+- ✅ Build de imagens Docker
+- ✅ Push para Docker Hub
+- ✅ Deploy automático
+
+**Triggers:**
+- Push para `main` branch
+- Pull requests
+- Manual (workflow_dispatch)
+
+**Secrets necessários:**
+```
+SONAR_TOKEN          # Token do SonarCloud
+DOCKER_USERNAME      # Usuario Docker Hub
+DOCKER_PASSWORD      # Senha Docker Hub
+```
+
+### SonarCloud
+
+**Quality Gates:**
+- Cobertura de código > 80%
+- Code Smells: Rating A
+- Bugs: 0
+- Vulnerabilidades: 0
+- Duplicação < 3%
+
+**Métricas analisadas:**
+- Reliability (Bugs)
+- Security (Vulnerabilities)
+- Maintainability (Code Smells)
+- Coverage (Testes)
+- Duplications
+
+### Segurança
+
+**Trivy Scanning:**
+- Scan de vulnerabilidades em imagens Docker
+- Severidade: CRITICAL, HIGH
+- Relatórios em SARIF format
+- Upload para GitHub Security
+
+**Análise de dependências:**
+- Scan automático de pacotes NuGet
+- Detecção de CVEs
+- Alertas de segurança
+
+---
+
+## 🏛️ Arquitetura e Fluxos
+
+### Clean Architecture
+
+Cada microsserviço segue Clean Architecture com 4 camadas:
+
+```
+┌─────────────────────────────────────────┐
+│           API / Presentation            │  ← Controllers, Middlewares
+├─────────────────────────────────────────┤
+│            Application                  │  ← Use Cases, DTOs, Handlers
+├─────────────────────────────────────────┤
+│              Domain                     │  ← Entities, Interfaces
+├─────────────────────────────────────────┤
+│          Infrastructure                 │  ← Data Access, External Services
+└─────────────────────────────────────────┘
+```
+
+**Princípios:**
+- Dependency Inversion (DI)
+- Separation of Concerns
+- Single Responsibility
+- Testabilidade
+
+### Fluxo de Criação de Funcionário
+
+```
+┌──────────┐       ┌─────────────┐       ┌──────────────┐
+│  Client  │──1──>│ Cadastro API│──2──>│  PostgreSQL  │
+└──────────┘       └─────────────┘       └──────────────┘
+                          │
+                          ├──3──> Email Service
+                          │
+                          ├──4──> RabbitMQ ──5──> Ativação Worker
+                          │
+                          └──6──> SignalR Hub ──7──> Frontend (Dept)
+```
+
+**Passos:**
+1. Cliente envia POST /api/employees
+2. Dados salvos no PostgreSQL
+3. Email de notificação enviado
+4. Mensagem publicada no RabbitMQ
+5. Worker consome mensagem e agenda job Hangfire
+6. Notificação SignalR enviada
+7. Frontend do departamento recebe notificação em tempo real
+
+### Fluxo de Ativação Automática
+
+```
+┌──────────────┐     ┌────────────┐     ┌──────────────┐
+│ Hangfire Job │────>│  Database  │────>│  RabbitMQ    │
+│  (Cron 1h)   │     │   Query    │     │   Publish    │
+└──────────────┘     └────────────┘     └──────────────┘
+                                               │
+                                               v
+                                        ┌──────────────┐
+                                        │ SignalR Hub  │
+                                        │  Notifica    │
+                                        └──────────────┘
+```
+
+**Lógica:**
+1. Job Hangfire executa a cada 1 hora
+2. Busca funcionários com StartDate <= hoje e IsActive = false
+3. Processa em lotes de 100 (se > 1000 funcionários)
+4. Atualiza IsActive = true
+5. Publica evento EmployeeActivated no RabbitMQ
+6. Envia notificação SignalR para departamento
+
+### Comunicação entre Microsserviços
+
+```
+┌─────────────┐                    ┌──────────────┐
+│  Cadastro   │◄──────────────────►│  PostgreSQL  │
+└──────┬──────┘                    └──────────────┘
+       │
+       │ Publish Events
+       ▼
+┌─────────────┐
+│  RabbitMQ   │
+│   Exchange  │
+└──────┬──────┘
+       │
+       │ Subscribe
+       ▼
+┌─────────────┐                    ┌──────────────┐
+│  Ativação   │◄──────────────────►│  PostgreSQL  │
+│   Worker    │                    │   (Cadastro) │
+└─────────────┘                    └──────────────┘
+
+┌─────────────┐
+│Notificações │◄─── SignalR ───────► Frontend
+└─────────────┘
+```
+
+**Padrões utilizados:**
+- Event-Driven Architecture
+- Message Queue (RabbitMQ)
+- CQRS (Command Query Responsibility Segregation)
+- Repository Pattern
+- Unit of Work
+- Dependency Injection
+
+---
 
 ## 📚 Documentação Adicional
 
-- [STRUCTURE.md](STRUCTURE.md) - Detalhamento da estrutura do projeto
-- [TODO.md](TODO.md) - Lista de tarefas e roadmap
+### Arquivos de Referência
+
+- **[FAST_TRACK_PLAN.md](FAST_TRACK_PLAN.md)** - Plano de implementação rápida (6.5h)
+- **[tests/LoadTests/README.md](tests/LoadTests/README.md)** - Documentação completa dos testes K6
+- **[.github/workflows/README.md](.github/workflows/README.md)** - Documentação da pipeline CI/CD
+- **[.github/workflows/deploy.yml](.github/workflows/deploy.yml)** - Workflow principal
+
+### Swagger UI
+
+Após iniciar a aplicação, acesse a documentação interativa:
+
+- **Cadastro API**: http://localhost:5001/swagger
+- **Notificações API**: http://localhost:5002/swagger
+
+### Tecnologias e Bibliotecas
+
+**Backend:**
+- ASP.NET Core 9.0
+- Entity Framework Core 9.0
+- MassTransit (RabbitMQ)
+- Hangfire (Background Jobs)
+- SignalR (Real-time)
+- FluentValidation
+- AutoMapper
+- Serilog
+
+**Testes:**
+- xUnit
+- Moq
+- FluentAssertions
+- K6 (Load Testing)
+
+**Infraestrutura:**
+- PostgreSQL 16
+- RabbitMQ 3.12
+- Docker & Docker Compose
+- GitHub Actions
+
+**Qualidade:**
+- SonarCloud
+- Trivy Security Scanner
+
+---
+
+## 🎯 Requisitos Atendidos
+
+### Funcionalidades Implementadas
+
+✅ **Cadastro de Funcionários**
+- CRUD completo
+- Validações de dados
+- Paginação
+
+✅ **Consultas e Relatórios**
+- Filtro por período (date range)
+- Agrupamento por departamento
+- Busca por ID
+
+✅ **Notificações**
+- Email automático na criação
+- SignalR para notificações em tempo real
+- Eventos por departamento
+
+✅ **Ativação Automática**
+- Job Hangfire executando a cada 1h
+- Processamento em lotes (100 itens)
+- Ativação na data de início
+
+✅ **Autenticação e Segurança**
+- JWT com Refresh Token
+- ASP.NET Identity
+- Proteção de endpoints
+
+✅ **Arquitetura**
+- Clean Architecture
+- Microsserviços
+- Event-Driven
+- Docker/Docker Compose
+
+✅ **Testes**
+- 99 testes unitários
+- Testes de carga K6
+- Cobertura > 80%
+
+✅ **CI/CD**
+- Pipeline GitHub Actions
+- SonarCloud
+- Security Scanning
+- Deploy automático
+
+---
 
 ## 🤝 Contribuindo
 
-Este projeto é parte de um desafio técnico para processo seletivo.
+Este projeto foi desenvolvido como parte de um desafio técnico.
+
+Para contribuir:
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/nova-funcionalidade`)
+3. Commit suas mudanças (`git commit -m 'feat: adiciona nova funcionalidade'`)
+4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+5. Abra um Pull Request
+
+**Padrões de Commit:**
+- `feat:` Nova funcionalidade
+- `fix:` Correção de bug
+- `docs:` Documentação
+- `test:` Testes
+- `refactor:` Refatoração
+- `chore:` Manutenção
+
+---
+
+## 📞 Suporte
+
+Para dúvidas ou problemas:
+- Abra uma [Issue](https://github.com/seu-usuario/employee-management-microservice/issues)
+- Consulte a documentação do Swagger
+- Veja os exemplos em [tests/LoadTests/](tests/LoadTests/)
+
+---
 
 ## 📄 Licença
 
-MIT
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+**Desenvolvido com .NET 9.0 | Clean Architecture | Microservices**
