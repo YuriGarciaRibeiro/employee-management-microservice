@@ -1,49 +1,49 @@
 using EmployeeManagement.BuildingBlocks.Contracts.Events;
 using EmployeeManagement.Notificacoes.Domain.Interfaces;
-using MassTransit;
+using EmployeeManagement.Notificacoes.Infrastructure.Messaging.Base;
 using Microsoft.Extensions.Logging;
 
 namespace EmployeeManagement.Notificacoes.Infrastructure.Messaging;
 
-public class EmployeeCreatedEventConsumer : IConsumer<EmployeeCreatedEvent>
+public class EmployeeCreatedEventConsumer : BaseEventConsumer<EmployeeCreatedEvent>
 {
     private readonly INotificationService _notificationService;
-    private readonly ILogger<EmployeeCreatedEventConsumer> _logger;
 
     public EmployeeCreatedEventConsumer(
         INotificationService notificationService,
         ILogger<EmployeeCreatedEventConsumer> logger)
+        : base(logger)
     {
         _notificationService = notificationService;
-        _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<EmployeeCreatedEvent> context)
+    protected override async Task ProcessEventAsync(EmployeeCreatedEvent @event)
     {
-        var @event = context.Message;
+        await _notificationService.NotifyEmployeeCreatedAsync(
+            @event.EmployeeId,
+            @event.Name,
+            @event.Department,
+            @event.StartDate);
+    }
 
-        _logger.LogInformation(
+    protected override void LogEventReceived(EmployeeCreatedEvent @event)
+    {
+        Logger.LogInformation(
             "Recebido evento EmployeeCreatedEvent. EmployeeId: {EmployeeId}, Nome: {Name}, Departamento: {Department}",
             @event.EmployeeId, @event.Name, @event.Department);
+    }
 
-        try
-        {
-            await _notificationService.NotifyEmployeeCreatedAsync(
-                @event.EmployeeId,
-                @event.Name,
-                @event.Department,
-                @event.StartDate);
+    protected override void LogEventProcessedSuccessfully(EmployeeCreatedEvent @event)
+    {
+        Logger.LogInformation(
+            "Notificação de criação enviada com sucesso para o funcionário {EmployeeId}",
+            @event.EmployeeId);
+    }
 
-            _logger.LogInformation(
-                "Notificação de criação enviada com sucesso para o funcionário {EmployeeId}",
-                @event.EmployeeId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Erro ao processar notificação de criação do funcionário {EmployeeId}",
-                @event.EmployeeId);
-            throw;
-        }
+    protected override void LogEventProcessingError(EmployeeCreatedEvent @event, Exception ex)
+    {
+        Logger.LogError(ex,
+            "Erro ao processar notificação de criação do funcionário {EmployeeId}",
+            @event.EmployeeId);
     }
 }

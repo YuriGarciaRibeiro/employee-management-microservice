@@ -38,7 +38,7 @@ public class CreateEmployeeCommandValidatorTests
     [InlineData("")]
     [InlineData(null)]
     [InlineData("  ")]
-    public void Validate_EmptyName_ShouldFail(string name)
+    public void Validate_EmptyName_ShouldFail(string? name)
     {
         // Arrange
         var command = new CreateEmployeeCommand(new CreateEmployeeDto
@@ -102,7 +102,7 @@ public class CreateEmployeeCommandValidatorTests
     [InlineData(null)]
     [InlineData("123")]
     [InlineData("abc")]
-    public void Validate_InvalidPhone_ShouldFail(string phone)
+    public void Validate_InvalidPhone_ShouldFail(string? phone)
     {
         // Arrange
         var command = new CreateEmployeeCommand(new CreateEmployeeDto
@@ -186,7 +186,7 @@ public class CreateEmployeeCommandValidatorTests
     [InlineData("")]
     [InlineData(null)]
     [InlineData("  ")]
-    public void Validate_EmptyDepartment_ShouldFail(string department)
+    public void Validate_EmptyDepartment_ShouldFail(string? department)
     {
         // Arrange
         var command = new CreateEmployeeCommand(new CreateEmployeeDto

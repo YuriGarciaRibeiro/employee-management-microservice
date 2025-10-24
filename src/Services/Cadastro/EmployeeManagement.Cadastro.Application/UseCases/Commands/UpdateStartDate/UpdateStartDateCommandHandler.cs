@@ -1,4 +1,5 @@
 using EmployeeManagement.BuildingBlocks.Contracts.Events;
+using EmployeeManagement.Cadastro.Application.Helpers;
 
 namespace EmployeeManagement.Cadastro.Application.UseCases.Commands.UpdateStartDate;
 
@@ -48,7 +49,7 @@ public class UpdateStartDateCommandHandler : IRequestHandler<UpdateStartDateComm
             try
             {
                 await _emailService.SendStartDateUpdatedEmailAsync(
-                    $"{employee.Name.ToLower().Replace(" ", ".")}@empresa.com",
+                    EmailHelper.GenerateCompanyEmail(employee.Name),
                     employee.Name,
                     oldStartDate,
                     request.NewStartDate
@@ -56,7 +57,7 @@ public class UpdateStartDateCommandHandler : IRequestHandler<UpdateStartDateComm
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending start date updated email");
+                _logger.LogError(ex, "Erro ao enviar email de atualização de data de início");
             }
         }, cancellationToken);
 

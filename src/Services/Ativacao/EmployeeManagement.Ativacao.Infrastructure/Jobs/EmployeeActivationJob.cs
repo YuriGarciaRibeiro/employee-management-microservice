@@ -32,11 +32,11 @@ public class EmployeeActivationJob
 
     public async Task ExecuteAsync()
     {
-        _logger.LogInformation("Iniciando job de ativação automática de funcionários às {Time}", DateTime.Now);
+        _logger.LogInformation("Iniciando job de ativação automática de funcionários às {Time}", DateTime.UtcNow);
 
         try
         {
-            var today = DateTime.Now.Date;
+            var today = DateTime.UtcNow.Date;
 
             var employees = await GetPendingEmployeesAsync(today);
 

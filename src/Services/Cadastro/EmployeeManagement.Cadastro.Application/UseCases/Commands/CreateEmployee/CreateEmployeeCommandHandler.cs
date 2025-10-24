@@ -1,6 +1,7 @@
 namespace EmployeeManagement.Cadastro.Application.UseCases.Commands.CreateEmployee;
 
 using EmployeeManagement.BuildingBlocks.Contracts.Events;
+using EmployeeManagement.Cadastro.Application.Helpers;
 
 public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, EmployeeDto>
 {
@@ -36,14 +37,14 @@ public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeComman
             try
             {
                 await _emailService.SendWelcomeEmailAsync(
-                    $"{employee.Name.ToLower().Replace(" ", ".")}@empresa.com",
+                    EmailHelper.GenerateCompanyEmail(employee.Name),
                     employee.Name,
                     employee.StartDate
                 );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending welcome email");
+                _logger.LogError(ex, "Erro ao enviar email de boas-vindas");
             }
         }, cancellationToken);
 

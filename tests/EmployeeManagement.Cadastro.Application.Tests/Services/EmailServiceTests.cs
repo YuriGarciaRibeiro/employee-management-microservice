@@ -76,7 +76,7 @@ public class EmailServiceTests
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    public async Task SendWelcomeEmailAsync_WithInvalidEmail_ShouldThrow(string invalidEmail)
+    public async Task SendWelcomeEmailAsync_WithInvalidEmail_ShouldThrow(string? invalidEmail)
     {
         // Arrange
         var recipientName = "Test User";
@@ -90,7 +90,7 @@ public class EmailServiceTests
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    public async Task SendStartDateUpdatedEmailAsync_WithInvalidEmail_ShouldThrow(string invalidEmail)
+    public async Task SendStartDateUpdatedEmailAsync_WithInvalidEmail_ShouldThrow(string? invalidEmail)
     {
         // Arrange
         var recipientName = "Test User";

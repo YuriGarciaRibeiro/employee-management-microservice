@@ -46,7 +46,7 @@ public class ActivateEmployeeBatchConsumer : IConsumer<ActivateEmployeeBatchEven
                     WHERE ""Id"" = ANY(@EmployeeIds)";
 
                 using var updateCommand = new NpgsqlCommand(updateSql, connection, transaction);
-                updateCommand.Parameters.AddWithValue("@UpdatedAt", DateTime.Now);
+                updateCommand.Parameters.AddWithValue("@UpdatedAt", DateTime.UtcNow);
                 updateCommand.Parameters.AddWithValue("@EmployeeIds", employeeIds);
 
                 var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
@@ -65,7 +65,7 @@ public class ActivateEmployeeBatchConsumer : IConsumer<ActivateEmployeeBatchEven
                         EmployeeId = employee.EmployeeId,
                         EmployeeName = employee.Name,
                         Department = employee.Department,
-                        ActivatedAt = DateTime.Now
+                        ActivatedAt = DateTime.UtcNow
                     };
 
                     await _publishEndpoint.Publish(activatedEvent);

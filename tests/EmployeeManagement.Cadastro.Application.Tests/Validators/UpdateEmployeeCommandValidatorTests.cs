@@ -36,7 +36,7 @@ public class UpdateEmployeeCommandValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData(null)]
-    public void Validate_EmptyName_ShouldFail(string name)
+    public void Validate_EmptyName_ShouldFail(string? name)
     {
         // Arrange
         var command = new UpdateEmployeeCommand(Guid.NewGuid(), new UpdateEmployeeDto

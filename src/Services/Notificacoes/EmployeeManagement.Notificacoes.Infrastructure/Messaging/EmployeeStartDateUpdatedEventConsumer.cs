@@ -1,49 +1,49 @@
 using EmployeeManagement.BuildingBlocks.Contracts.Events;
 using EmployeeManagement.Notificacoes.Domain.Interfaces;
-using MassTransit;
+using EmployeeManagement.Notificacoes.Infrastructure.Messaging.Base;
 using Microsoft.Extensions.Logging;
 
 namespace EmployeeManagement.Notificacoes.Infrastructure.Messaging;
 
-public class EmployeeStartDateUpdatedEventConsumer : IConsumer<EmployeeStartDateUpdatedEvent>
+public class EmployeeStartDateUpdatedEventConsumer : BaseEventConsumer<EmployeeStartDateUpdatedEvent>
 {
     private readonly INotificationService _notificationService;
-    private readonly ILogger<EmployeeStartDateUpdatedEventConsumer> _logger;
 
     public EmployeeStartDateUpdatedEventConsumer(
         INotificationService notificationService,
         ILogger<EmployeeStartDateUpdatedEventConsumer> logger)
+        : base(logger)
     {
         _notificationService = notificationService;
-        _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<EmployeeStartDateUpdatedEvent> context)
+    protected override async Task ProcessEventAsync(EmployeeStartDateUpdatedEvent @event)
     {
-        var @event = context.Message;
+        await _notificationService.NotifyStartDateUpdatedAsync(
+            @event.EmployeeId,
+            @event.EmployeeName,
+            @event.Department,
+            @event.NewStartDate);
+    }
 
-        _logger.LogInformation(
+    protected override void LogEventReceived(EmployeeStartDateUpdatedEvent @event)
+    {
+        Logger.LogInformation(
             "Recebido evento EmployeeStartDateUpdatedEvent. EmployeeId: {EmployeeId}, Nome: {Name}, Nova Data: {NewStartDate}",
             @event.EmployeeId, @event.EmployeeName, @event.NewStartDate);
+    }
 
-        try
-        {
-            await _notificationService.NotifyStartDateUpdatedAsync(
-                @event.EmployeeId,
-                @event.EmployeeName,
-                @event.Department,
-                @event.NewStartDate);
+    protected override void LogEventProcessedSuccessfully(EmployeeStartDateUpdatedEvent @event)
+    {
+        Logger.LogInformation(
+            "Notificação de atualização de data enviada com sucesso para o funcionário {EmployeeId}",
+            @event.EmployeeId);
+    }
 
-            _logger.LogInformation(
-                "Notificação de atualização de data enviada com sucesso para o funcionário {EmployeeId}",
-                @event.EmployeeId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Erro ao processar notificação de atualização de data do funcionário {EmployeeId}",
-                @event.EmployeeId);
-            throw;
-        }
+    protected override void LogEventProcessingError(EmployeeStartDateUpdatedEvent @event, Exception ex)
+    {
+        Logger.LogError(ex,
+            "Erro ao processar notificação de atualização de data do funcionário {EmployeeId}",
+            @event.EmployeeId);
     }
 }

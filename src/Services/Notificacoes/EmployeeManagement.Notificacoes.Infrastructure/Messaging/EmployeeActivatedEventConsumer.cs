@@ -1,48 +1,48 @@
 using EmployeeManagement.BuildingBlocks.Contracts.Events;
 using EmployeeManagement.Notificacoes.Domain.Interfaces;
-using MassTransit;
+using EmployeeManagement.Notificacoes.Infrastructure.Messaging.Base;
 using Microsoft.Extensions.Logging;
 
 namespace EmployeeManagement.Notificacoes.Infrastructure.Messaging;
 
-public class EmployeeActivatedEventConsumer : IConsumer<EmployeeActivatedEvent>
+public class EmployeeActivatedEventConsumer : BaseEventConsumer<EmployeeActivatedEvent>
 {
     private readonly INotificationService _notificationService;
-    private readonly ILogger<EmployeeActivatedEventConsumer> _logger;
 
     public EmployeeActivatedEventConsumer(
         INotificationService notificationService,
         ILogger<EmployeeActivatedEventConsumer> logger)
+        : base(logger)
     {
         _notificationService = notificationService;
-        _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<EmployeeActivatedEvent> context)
+    protected override async Task ProcessEventAsync(EmployeeActivatedEvent @event)
     {
-        var @event = context.Message;
+        await _notificationService.NotifyEmployeeActivatedAsync(
+            @event.EmployeeId,
+            @event.EmployeeName,
+            @event.Department);
+    }
 
-        _logger.LogInformation(
+    protected override void LogEventReceived(EmployeeActivatedEvent @event)
+    {
+        Logger.LogInformation(
             "Recebido evento EmployeeActivatedEvent. EmployeeId: {EmployeeId}, Nome: {Name}, Departamento: {Department}",
             @event.EmployeeId, @event.EmployeeName, @event.Department);
+    }
 
-        try
-        {
-            await _notificationService.NotifyEmployeeActivatedAsync(
-                @event.EmployeeId,
-                @event.EmployeeName,
-                @event.Department);
+    protected override void LogEventProcessedSuccessfully(EmployeeActivatedEvent @event)
+    {
+        Logger.LogInformation(
+            "Notificação de ativação enviada com sucesso para o funcionário {EmployeeId}",
+            @event.EmployeeId);
+    }
 
-            _logger.LogInformation(
-                "Notificação de ativação enviada com sucesso para o funcionário {EmployeeId}",
-                @event.EmployeeId);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Erro ao processar notificação de ativação do funcionário {EmployeeId}",
-                @event.EmployeeId);
-            throw;
-        }
+    protected override void LogEventProcessingError(EmployeeActivatedEvent @event, Exception ex)
+    {
+        Logger.LogError(ex,
+            "Erro ao processar notificação de ativação do funcionário {EmployeeId}",
+            @event.EmployeeId);
     }
 }
