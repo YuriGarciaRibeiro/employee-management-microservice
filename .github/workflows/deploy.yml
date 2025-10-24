@@ -97,7 +97,15 @@ jobs:
         fi
 
         # Try to extract CE task id from the output (pattern: api/ce/task?id=...)
-        CE_ID=$(grep -oE 'api/ce/task\?id=[A-Za-z0-9_-]+' "$OUTPUT_FILE" | head -n1 | sed 's/.*id=//') || true
+        # Treat the log as text even if grep detects binary data, and fall back to `strings` if needed.
+        CE_ID=$(grep -a -oE 'api/ce/task\?id=[A-Za-z0-9_-]+' "$OUTPUT_FILE" | head -n1 | sed 's/.*id=//') || true
+
+        if [ -z "$CE_ID" ]; then
+          # Fallback: filter printable strings then grep (if `strings` is available)
+          if command -v strings >/dev/null 2>&1; then
+            CE_ID=$(strings "$OUTPUT_FILE" | grep -oE 'api/ce/task\?id=[A-Za-z0-9_-]+' | head -n1 | sed 's/.*id=//') || true
+          fi
+        fi
 
         if [ -n "$CE_ID" ]; then
           # Normalize host URL (remove trailing slash)
