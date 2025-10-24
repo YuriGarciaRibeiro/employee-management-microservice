@@ -136,6 +136,8 @@ services:
     environment:
       - DOTNET_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres;Include Error Detail=true
+      - ConnectionStrings__HangfireConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres
+      - "ConnectionStrings__CadastroConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres;Search Path=cadastro"
       - RabbitMQ__Host=rabbitmq
       - RabbitMQ__Port=5672
       - RabbitMQ__Username=guest
