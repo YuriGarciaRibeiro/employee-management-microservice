@@ -165,10 +165,12 @@ public static class DbInitializer
         // 1. Funcionários ativos (já iniciados)
         for (int i = 1; i <= 10; i++)
         {
+            var name = $"Funcionário Ativo {i}";
             employees.Add(new Employee
             {
                 Id = Guid.NewGuid(),
-                Name = $"Funcionário Ativo {i}",
+                Name = name,
+                Email = $"{name.ToLower().Replace(" ", ".")}@empresa.com",
                 Phone = $"+5511{90000000 + i}",
                 Department = departments[i % departments.Length],
                 StartDate = DateTime.UtcNow.AddDays(-30 - i),
@@ -180,10 +182,12 @@ public static class DbInitializer
         // 2. Funcionários inativos (início futuro próximo)
         for (int i = 1; i <= 15; i++)
         {
+            var name = $"Funcionário Futuro {i}";
             employees.Add(new Employee
             {
                 Id = Guid.NewGuid(),
-                Name = $"Funcionário Futuro {i}",
+                Name = name,
+                Email = $"{name.ToLower().Replace(" ", ".")}@empresa.com",
                 Phone = $"+5511{91000000 + i}",
                 Department = departments[i % departments.Length],
                 StartDate = DateTime.UtcNow.AddDays(i),
@@ -197,10 +201,12 @@ public static class DbInitializer
         var batchTestDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7).Date, DateTimeKind.Utc); // 7 dias no futuro
         for (int i = 1; i <= 150; i++)
         {
+            var name = $"Funcionário Lote {i}";
             employees.Add(new Employee
             {
                 Id = Guid.NewGuid(),
-                Name = $"Funcionário Lote {i}",
+                Name = name,
+                Email = $"{name.ToLower().Replace(" ", ".")}@empresa.com",
                 Phone = $"+5511{92000000 + i}",
                 Department = departments[i % departments.Length],
                 StartDate = batchTestDate,
@@ -214,6 +220,7 @@ public static class DbInitializer
         {
             Id = Guid.NewGuid(),
             Name = "João Silva",
+            Email = "joao.silva@empresa.com",
             Phone = "+551199999001",
             Department = "TI",
             StartDate = new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc),
@@ -225,6 +232,7 @@ public static class DbInitializer
         {
             Id = Guid.NewGuid(),
             Name = "Maria Santos",
+            Email = "maria.santos@empresa.com",
             Phone = "+551199999002",
             Department = "RH",
             StartDate = new DateTime(2025, 2, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -236,6 +244,7 @@ public static class DbInitializer
         {
             Id = Guid.NewGuid(),
             Name = "Pedro Oliveira",
+            Email = "pedro.oliveira@empresa.com",
             Phone = "+551199999003",
             Department = "Vendas",
             StartDate = new DateTime(2025, 3, 1, 0, 0, 0, DateTimeKind.Utc),
@@ -247,6 +256,7 @@ public static class DbInitializer
         {
             Id = Guid.NewGuid(),
             Name = "Ana Costa",
+            Email = "ana.costa@empresa.com",
             Phone = "+551199999004",
             Department = "Financeiro",
             StartDate = DateTime.UtcNow.AddDays(-15),
@@ -258,6 +268,7 @@ public static class DbInitializer
         {
             Id = Guid.NewGuid(),
             Name = "Carlos Ferreira",
+            Email = "carlos.ferreira@empresa.com",
             Phone = "+551199999005",
             Department = "Marketing",
             StartDate = DateTime.UtcNow.AddDays(30),

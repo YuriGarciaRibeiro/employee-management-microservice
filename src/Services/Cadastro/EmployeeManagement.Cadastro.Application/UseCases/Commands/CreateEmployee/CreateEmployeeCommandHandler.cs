@@ -36,15 +36,22 @@ public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeComman
         {
             try
             {
+                _logger.LogInformation(
+                    "Tentando enviar email de boas-vindas para {EmployeeName} ({Email})",
+                    employee.Name, employee.Email);
+
                 await _emailService.SendWelcomeEmailAsync(
-                    EmailHelper.GenerateCompanyEmail(employee.Name),
+                    employee.Email,
                     employee.Name,
                     employee.StartDate
                 );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao enviar email de boas-vindas");
+                _logger.LogError(ex,
+                    "Erro ao enviar email de boas-vindas para {EmployeeName} ({Email}). " +
+                    "Verifique as configurações SMTP no arquivo .env",
+                    employee.Name, employee.Email);
             }
         }, cancellationToken);
 

@@ -4,10 +4,12 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: employee-postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: employeedb
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +17,7 @@ services:
     networks:
       - employee-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,9 +25,11 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: employee-rabbitmq
+    env_file:
+      - .env
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -42,9 +46,11 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: employee-pgadmin
+    env_file:
+      - .env
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "5050:80"
@@ -55,47 +61,24 @@ services:
     depends_on:
       - postgres
 
-  sonarqube:
-    image: sonarqube:community
-    container_name: employee-sonarqube
-    environment:
-      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: 'true'
-    ports:
-      - "9000:9000"
-    volumes:
-      - sonarqube-data:/opt/sonarqube/data
-      - sonarqube-extensions:/opt/sonarqube/extensions
-      - sonarqube-logs:/opt/sonarqube/logs
-    networks:
-      - employee-network
-
   # Microservices
   cadastro-api:
     build:
       context: .
       dockerfile: src/Services/Cadastro/EmployeeManagement.Cadastro.API/Dockerfile
     container_name: employee-cadastro-api
+    env_file:
+      - .env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres;Include Error Detail=true
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employeedb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__Username=guest
-      - RabbitMQ__Password=guest
-      - JwtSettings__Secret=${JWT_SECRET:-your-super-secret-key-change-this-in-production-min-32-chars}
-      - JwtSettings__Issuer=EmployeeManagement
-      - JwtSettings__Audience=EmployeeManagementUsers
-      - JwtSettings__ExpirationMinutes=60
-      - JwtSettings__RefreshTokenExpirationDays=7
-      - EmailSettings__SmtpHost=${SMTP_HOST:-smtp.gmail.com}
-      - EmailSettings__SmtpPort=${SMTP_PORT:-587}
-      - EmailSettings__SmtpUser=${SMTP_USER:-noreply@employeemanagement.com}
-      - EmailSettings__SmtpPassword=${SMTP_PASSWORD:-}
-      - EmailSettings__FromEmail=${SMTP_FROM:-noreply@employeemanagement.com}
-      - EmailSettings__FromName=Employee Management System
-      - Serilog__WriteTo__1__Name=Seq
-      - Serilog__WriteTo__1__Args__serverUrl=http://seq:5341
+      - RabbitMQ__Username=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
+      - JwtSettings__Secret=${JWT_SECRET}
+      - EmailSettings__SmtpUser=${SMTP_USER}
+      - EmailSettings__SmtpPassword=${SMTP_PASSWORD}
     ports:
       - "5001:8080"
     depends_on:
@@ -103,7 +86,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-
     networks:
       - employee-network
     restart: unless-stopped
@@ -119,25 +101,21 @@ services:
       context: .
       dockerfile: src/Services/Ativacao/EmployeeManagement.Ativacao.Worker/Dockerfile
     container_name: employee-ativacao-worker
+    env_file:
+      - .env
     environment:
       - DOTNET_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres;Include Error Detail=true
-      - ConnectionStrings__HangfireConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres
-      - "ConnectionStrings__CadastroConnection=Host=postgres;Port=5432;Database=employeedb;Username=postgres;Password=postgres;Search Path=cadastro"
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=employeedb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Search Path=ativacao
+      - ConnectionStrings__HangfireConnection=Host=postgres;Port=5432;Database=employeedb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__CadastroConnection=Host=postgres;Port=5432;Database=employeedb;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Search Path=cadastro
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__Username=guest
-      - RabbitMQ__Password=guest
-      - Hangfire__DashboardEnabled=true
-      - Hangfire__WorkerCount=5
-      - Serilog__WriteTo__1__Name=Seq
-      - Serilog__WriteTo__1__Args__serverUrl=http://seq:5341
+      - RabbitMQ__Username=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-
     networks:
       - employee-network
     restart: unless-stopped
@@ -147,17 +125,14 @@ services:
       context: .
       dockerfile: src/Services/Notificacoes/EmployeeManagement.Notificacoes.API/Dockerfile
     container_name: employee-notificacoes-api
+    env_file:
+      - .env
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - RabbitMQ__Host=rabbitmq
-      - RabbitMQ__Port=5672
-      - RabbitMQ__Username=guest
-      - RabbitMQ__Password=guest
-      - SignalR__EnableDetailedErrors=true
-      - Cors__AllowedOrigins=http://localhost:3000,http://localhost:5173
-      - Serilog__WriteTo__1__Name=Seq
-      - Serilog__WriteTo__1__Args__serverUrl=http://seq:5341
+      - RabbitMQ__Username=${RABBITMQ_USER}
+      - RabbitMQ__Password=${RABBITMQ_PASSWORD}
     ports:
       - "5002:8080"
     depends_on:
@@ -177,9 +152,6 @@ volumes:
   postgres-data:
   rabbitmq-data:
   pgadmin-data:
-  sonarqube-data:
-  sonarqube-extensions:
-  sonarqube-logs:
 
 networks:
   employee-network:

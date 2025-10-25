@@ -1,6 +1,7 @@
 using EmployeeManagement.Cadastro.Domain.Interfaces;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MimeKit;
 
 namespace EmployeeManagement.Cadastro.Infrastructure.Services;
@@ -8,10 +9,12 @@ namespace EmployeeManagement.Cadastro.Infrastructure.Services;
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
+    private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IConfiguration configuration)
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task SendWelcomeEmailAsync(string recipientEmail, string recipientName, DateTime startDate)
@@ -56,30 +59,48 @@ public class EmailService : IEmailService
 
     private async Task SendEmailAsync(string recipientEmail, string recipientName, string subject, string htmlBody)
     {
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress(
-            _configuration["EmailSettings:SenderName"],
-            _configuration["EmailSettings:SenderEmail"]
-        ));
-        message.To.Add(new MailboxAddress(recipientName, recipientEmail));
-        message.Subject = subject;
+        try
+        {
+            _logger.LogInformation(
+                "Enviando email para {RecipientEmail} ({RecipientName}) - Assunto: {Subject}",
+                recipientEmail, recipientName, subject);
 
-        var bodyBuilder = new BodyBuilder { HtmlBody = htmlBody };
-        message.Body = bodyBuilder.ToMessageBody();
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(
+                _configuration["EmailSettings:FromName"],
+                _configuration["EmailSettings:FromEmail"]
+            ));
+            message.To.Add(new MailboxAddress(recipientName, recipientEmail));
+            message.Subject = subject;
 
-        using var client = new SmtpClient();
-        await client.ConnectAsync(
-            _configuration["EmailSettings:SmtpServer"],
-            int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587"),
-            MailKit.Security.SecureSocketOptions.StartTls
-        );
+            var bodyBuilder = new BodyBuilder { HtmlBody = htmlBody };
+            message.Body = bodyBuilder.ToMessageBody();
 
-        await client.AuthenticateAsync(
-            _configuration["EmailSettings:Username"],
-            _configuration["EmailSettings:Password"]
-        );
+            using var client = new SmtpClient();
+            await client.ConnectAsync(
+                _configuration["EmailSettings:SmtpHost"],
+                int.Parse(_configuration["EmailSettings:SmtpPort"] ?? "587"),
+                MailKit.Security.SecureSocketOptions.StartTls
+            );
 
-        await client.SendAsync(message);
-        await client.DisconnectAsync(true);
+            await client.AuthenticateAsync(
+                _configuration["EmailSettings:SmtpUser"],
+                _configuration["EmailSettings:SmtpPassword"]
+            );
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation(
+                "Email enviado com sucesso para {RecipientEmail} ({RecipientName}) - Assunto: {Subject}",
+                recipientEmail, recipientName, subject);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Erro ao enviar email para {RecipientEmail} ({RecipientName}) - Assunto: {Subject}",
+                recipientEmail, recipientName, subject);
+            throw;
+        }
     }
 }

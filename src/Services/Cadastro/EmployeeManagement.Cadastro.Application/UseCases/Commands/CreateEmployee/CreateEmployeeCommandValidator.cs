@@ -11,6 +11,11 @@ public class CreateEmployeeCommandValidator : AbstractValidator<CreateEmployeeCo
             .MinimumLength(3).WithMessage("Nome deve ter no mínimo 3 caracteres")
             .MaximumLength(100).WithMessage("Nome deve ter no máximo 100 caracteres");
 
+        RuleFor(x => x.Employee.Email)
+            .NotEmpty().WithMessage("Email é obrigatório")
+            .EmailAddress().WithMessage("Email inválido")
+            .MaximumLength(100).WithMessage("Email deve ter no máximo 100 caracteres");
+
         RuleFor(x => x.Employee.Phone)
             .NotEmpty().WithMessage("Telefone é obrigatório")
             .MinimumLength(10).WithMessage("Telefone deve ter no mínimo 10 caracteres")

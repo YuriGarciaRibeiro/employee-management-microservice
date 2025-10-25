@@ -48,8 +48,12 @@ public class UpdateStartDateCommandHandler : IRequestHandler<UpdateStartDateComm
         {
             try
             {
+                _logger.LogInformation(
+                    "Tentando enviar email de atualização de data de início para {EmployeeName} ({Email})",
+                    employee.Name, employee.Email);
+
                 await _emailService.SendStartDateUpdatedEmailAsync(
-                    EmailHelper.GenerateCompanyEmail(employee.Name),
+                    employee.Email,
                     employee.Name,
                     oldStartDate,
                     request.NewStartDate
@@ -57,7 +61,10 @@ public class UpdateStartDateCommandHandler : IRequestHandler<UpdateStartDateComm
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao enviar email de atualização de data de início");
+                _logger.LogError(ex,
+                    "Erro ao enviar email de atualização de data de início para {EmployeeName} ({Email}). " +
+                    "Verifique as configurações SMTP no arquivo .env",
+                    employee.Name, employee.Email);
             }
         }, cancellationToken);
 
