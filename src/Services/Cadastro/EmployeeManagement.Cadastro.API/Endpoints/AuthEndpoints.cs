@@ -1,11 +1,7 @@
 using EmployeeManagement.Cadastro.Application.DTOs.Auth;
 using EmployeeManagement.Cadastro.Domain.Entities;
 using EmployeeManagement.Cadastro.Domain.Interfaces;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
 
 namespace EmployeeManagement.Cadastro.API.Endpoints;
 
@@ -44,7 +40,13 @@ public static class AuthEndpoints
                 Email = user.Email ?? string.Empty,
                 FullName = user.FullName
             });
-        });
+        })
+        .WithName("Register")
+        .WithSummary("Registers a new user")
+        .WithDescription("Registers a new user with the provided details.")
+        .Produces<AuthResponseDto>(StatusCodes.Status201Created)
+        .ProducesProblem(StatusCodes.Status400BadRequest)
+        .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         auth.MapPost("/login", async (SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, IJwtTokenService jwtTokenService, IConfiguration configuration, LoginDto dto) =>
         {
@@ -71,7 +73,13 @@ public static class AuthEndpoints
                 Email = user.Email ?? string.Empty,
                 FullName = user.FullName
             });
-        });
+        })
+        .WithName("Login")
+        .WithSummary("Logs in a user")
+        .WithDescription("Logs in a user with the provided credentials.")
+        .Produces<AuthResponseDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status500InternalServerError);
 
     auth.MapPost("/refresh", async (UserManager<ApplicationUser> userManager, IJwtTokenService jwtTokenService, IConfiguration configuration, RefreshTokenDto dto) =>
         {
@@ -100,7 +108,13 @@ public static class AuthEndpoints
                 Email = user.Email ?? string.Empty,
                 FullName = user.FullName
             });
-        });
+        })
+        .WithName("RefreshToken")
+        .WithSummary("Refreshes JWT token")
+        .WithDescription("Refreshes the JWT token using a valid refresh token.")
+        .Produces<AuthResponseDto>(StatusCodes.Status200OK)
+        .ProducesProblem(StatusCodes.Status401Unauthorized)
+        .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return app;
     }
