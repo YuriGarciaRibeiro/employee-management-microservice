@@ -168,6 +168,31 @@ docker-compose down -v
 
 ---
 
+## 📣 Visualizando logs (Dozzle)
+
+Adicionei o Dozzle para visualização simples de logs via web. Ele é leve, imediado e ideal para desenvolvimento.
+
+Como ver os logs rapidamente:
+
+- Dozzle (UI muito simples e imediata):
+  - URL: http://localhost:8088
+  - Dozzle lista todos os containers e permite seguir (tail) os logs em tempo real. Ele lê diretamente do Docker socket.
+
+Passos rápidos (terminal zsh):
+```bash
+# Subir todos os serviços (inclui dozzle)
+docker compose up -d
+
+# Verificar containers
+docker compose ps
+```
+
+Dozzle é a forma mais direta: abra http://localhost:8088 e clique no container que deseja inspecionar.
+
+Observação:
+- Removi o Loki/Promtail da configuração por pedido — caso queira histórico e buscas avançadas, posso readicionar Loki+Promtail no futuro.
+
+
 ### Opção 2: Executar Localmente (Desenvolvimento)
 
 Para desenvolvimento local sem Docker.

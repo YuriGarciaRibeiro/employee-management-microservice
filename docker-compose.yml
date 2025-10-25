@@ -67,6 +67,8 @@ services:
       context: .
       dockerfile: src/Services/Cadastro/EmployeeManagement.Cadastro.API/Dockerfile
     container_name: employee-cadastro-api
+    labels:
+      - "service=cadastro-api"
     env_file:
       - .env
     environment:
@@ -101,6 +103,8 @@ services:
       context: .
       dockerfile: src/Services/Ativacao/EmployeeManagement.Ativacao.Worker/Dockerfile
     container_name: employee-ativacao-worker
+    labels:
+      - "service=ativacao-worker"
     env_file:
       - .env
     environment:
@@ -125,6 +129,8 @@ services:
       context: .
       dockerfile: src/Services/Notificacoes/EmployeeManagement.Notificacoes.API/Dockerfile
     container_name: employee-notificacoes-api
+    labels:
+      - "service=notificacoes-api"
     env_file:
       - .env
     environment:
@@ -148,10 +154,23 @@ services:
       retries: 3
       start_period: 10s
 
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: employee-dozzle
+    ports:
+      - "8088:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - employee-network
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   rabbitmq-data:
   pgadmin-data:
+  
+ 
 
 networks:
   employee-network:
