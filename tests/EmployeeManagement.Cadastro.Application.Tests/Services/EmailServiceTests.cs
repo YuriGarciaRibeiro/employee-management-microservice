@@ -15,7 +15,7 @@ public class EmailServiceTests
     {
         _configurationMock = new Mock<IConfiguration>();
         SetupConfiguration();
-        _emailService = new EmailService(_configurationMock.Object);
+        _emailService = new EmailService(_configurationMock.Object, new Mock<Microsoft.Extensions.Logging.ILogger<EmailService>>().Object);
     }
 
     private void SetupConfiguration()
