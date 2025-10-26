@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { randomString } from './utils/helpers.js';
+import { generateUniqueEmail, generateRandomName } from './utils/helpers.js';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5001';
 
@@ -36,8 +36,8 @@ export default function (data) {
   }
 
   const payload = JSON.stringify({
-    name: `Test User ${randomString(6)}`,
-    email: `test+${randomString(6)}@example.com`,
+  name: generateRandomName(),
+  email: generateUniqueEmail('test'),
     department: 'TI',
     position: 'Dev',
     // Validation requires phone and startDate. Provide valid formats.
